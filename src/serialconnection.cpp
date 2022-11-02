@@ -3,6 +3,7 @@
 //
 
 #include "serialconnection.h"
+#include <QtSerialPort/QSerialPortInfo>
 
 namespace KilobotOhcLib {
     SerialConnection::SerialConnection(QObject *parent) : QObject(parent) {
@@ -18,5 +19,15 @@ namespace KilobotOhcLib {
 
     void SerialConnection::open() {
 
+    }
+
+    QVector<std::pair< QString,  QString>> SerialConnection::enumerate() {
+        auto list = QVector<std::pair<QString, QString>>(QSerialPortInfo::availablePorts().size());
+
+        for (auto pi: QSerialPortInfo::availablePorts()){
+            list.emplace_back(pi.portName(), pi.systemLocation());
+        }
+
+        return list;
     }
 } // KilobotOhcLib

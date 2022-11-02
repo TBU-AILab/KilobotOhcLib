@@ -6,6 +6,7 @@
 #define KILOBOTOHCLIB_SERIALCONNECTION_H
 #include <QObject>
 #include <QtSerialPort/QSerialPort>
+i#include <QVector>
 
 namespace KilobotOhcLib {
 
@@ -22,7 +23,7 @@ namespace KilobotOhcLib {
         Q_OBJECT
     public:
         explicit SerialConnection(QObject *parent = nullptr);
-
+        static QVector<std::pair<QString, QString>> enumerate();
     signals:
         void readText(QString);
         void status(SerialConnectionStatus status, QString msg = "");
