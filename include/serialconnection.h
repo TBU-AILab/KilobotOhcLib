@@ -6,13 +6,20 @@
 #define KILOBOTOHCLIB_SERIALCONNECTION_H
 #include <QObject>
 #include <QtSerialPort/QSerialPort>
-i#include <QVector>
+#include <QVector>
 
 namespace KilobotOhcLib {
 
     enum class SerialConnectionStatus{
         SC_Status_OK,
-        SC_Status_Timeout
+        SC_Status_Timeout,
+        SC_Status_CannotOpenPort
+    };
+
+    enum class  SerialConnectionTransferMode{
+        MODE_NORMAL = 0,
+        MODE_UPLOAD = 0x01,
+        MODE_DOWNLOAD = 0x02
     };
 
     /**
@@ -23,7 +30,7 @@ namespace KilobotOhcLib {
         Q_OBJECT
     public:
         explicit SerialConnection(QObject *parent = nullptr);
-        static QVector<std::pair<QString, QString>> enumerate();
+        static QVector<QString> enumerate();
     signals:
         void readText(QString);
         void status(SerialConnectionStatus status, QString msg = "");
@@ -31,12 +38,15 @@ namespace KilobotOhcLib {
         void SendMsgsQueueState(bool);
 
     public slots:
-        void sendCommand(const QByteArray &data);
+        void setPort(const QString portName);
+        void sendCommand(const QByteArray &data, bool wait = true);
         void open();
+        void close();
 
     private:
         QSerialPort *port;
         int m_waitTimeout = 20;
+        SerialConnectionTransferMode mode = SerialConnectionTransferMode::MODE_NORMAL;
     };
 
 } // KilobotOhcLib

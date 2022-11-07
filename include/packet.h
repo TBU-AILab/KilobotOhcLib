@@ -1,18 +1,19 @@
 // 01010101
-
+#ifndef KILOBOTOHCLIB_PACKET_H
+#define KILOBOTOHCLIB_PACKET_H
 #include <cstdint>
 
 #define PAGE_SIZE 128
 #define PACKET_HEADER 0x55
 #define PACKET_SIZE   PAGE_SIZE+4
 
-enum class PACKET_TYPE{
+enum  {
     PACKET_STOP,
     PACKET_LEDTOGGLE,
     PACKET_FORWARDMSG,
     PACKET_FORWARDRAWMSG,
     PACKET_BOOTPAGE
-};
+} PACKET_TYPE;
 
 enum class message_type_t{
     NORMAL = 0,
@@ -38,3 +39,5 @@ enum class CALIB{
     CALIB_TURN_RIGHT,
     CALIB_STRAIGHT
 };
+
+#endif

@@ -44,7 +44,9 @@ else()
 endif()
 
 target_link_libraries(KilobotOhcProgrammer PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::SerialPort   Qt${QT_VERSION_MAJOR}::Gui  Qt${QT_VERSION_MAJOR}::Core)
-target_compile_definitions(KilobotOhcProgrammer PRIVATE KILOBOTOHCLIB_LIBRARY)
+#target_compile_definitions(KilobotOhcProgrammer PRIVATE KILOBOTOHCLIB_LIBRARY)
+target_link_libraries(KilobotOhcProgrammer PRIVATE KilobotOhcLib)
+target_include_directories(KilobotOhcProgrammer PUBLIC ../../include)
 
 
 

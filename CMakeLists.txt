@@ -23,6 +23,6 @@ add_library(KilobotOhcLib SHARED
         include/packet.h
         src/kilobotoverheadcontroller.cpp include/kilobotoverheadcontroller.h src/serialconnection.cpp include/serialconnection.h)
 
-target_link_libraries(KilobotOhcLib PRIVATE Qt${QT_VERSION_MAJOR}::Core)
+target_link_libraries(KilobotOhcLib PRIVATE Qt${QT_VERSION_MAJOR}::Core Qt${QT_VERSION_MAJOR}::SerialPort )
 
 target_compile_definitions(KilobotOhcLib PRIVATE KILOBOTOHCLIB_LIBRARY)

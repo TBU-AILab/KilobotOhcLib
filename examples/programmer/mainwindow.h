@@ -7,6 +7,7 @@
 
 #include <QMainWindow>
 #include <QtSerialPort/QSerialPortInfo>
+#include "packet.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -25,6 +26,8 @@ private slots:
     void on_pushButton_clicked();
 
     void on_cbDevice_activated(int index);
+
+    void btnLedToggle();
 
 private:
     Ui::MainWindow *ui;

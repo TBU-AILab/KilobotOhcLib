@@ -6,6 +6,8 @@
 #include "./ui_mainwindow.h"
 #include <QSerialPortInfo>
 #include <QSerialPort>
+#include <QDebug>
+#include "kilobotoverheadcontroller.h"
 
 MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWindow){
     ui->setupUi(this);
@@ -18,6 +20,7 @@ MainWindow::MainWindow(QWidget *parent): QMainWindow(parent), ui(new Ui::MainWin
         ui->cbBaudRate->addItem(QString("%1").arg(pBaudRate));
     }
     ui->teLog->setVisible(false);
+    connect(ui->pbLedToggle, &QPushButton::clicked, this, &MainWindow::btnLedToggle);
 }
 
 MainWindow::~MainWindow() {
@@ -55,5 +58,15 @@ void MainWindow::on_cbDevice_activated(int index)
         ui->pbUpload->setEnabled(true);
         ui->teLog->append(QString("Port changed: %1").arg(currentPort->portName()));
     }
+}
+
+void MainWindow::btnLedToggle() {
+    auto controller = new KilobotOhcLib::KilobotOverheadController(this);
+    controller->serial_conn->setPort(ui->cbDevice->currentText());
+    controller->serial_conn->open();
+    controller->sendMessage(COMMAND_LEDTOGGLE);
+    controller->serial_conn->close();
+    qDebug() << "done";
+
 }
 
