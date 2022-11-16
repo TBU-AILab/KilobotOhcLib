@@ -4,13 +4,15 @@
 
 #include "serialconnection.h"
 #include <QtSerialPort/QSerialPortInfo>
+#include <QDebug>
 
 namespace KilobotOhcLib {
 
-
+    static unsigned char buf[4096];
+    static QByteArray packet(PACKET_SIZE, 0);
 
     SerialConnection::SerialConnection(QObject *parent) : QObject(parent) {
-        port = new QSerialPort;
+        port = new QSerialPort(this);
     }
 
     /**
@@ -52,12 +54,11 @@ namespace KilobotOhcLib {
      * @return List of available ports names
      */
     QVector<QString> SerialConnection::enumerate() {
-        auto list = QVector<QString>(QSerialPortInfo::availablePorts().size());
+        auto list = QVector<QString>();
 
         for (auto pi: QSerialPortInfo::availablePorts()){
             list.push_back(pi.portName());
         }
-
         return list;
     }
 
@@ -72,4 +73,67 @@ namespace KilobotOhcLib {
         port->setPortName(portName);
         open();
     }
+
+
+    //TODO: Check if it's necessery to controll the connection
+    void SerialConnection::sendProgram(QString file) {
+        data.load(file.toStdString());
+        page_total = data.size() / PAGE_SIZE + 1;
+        if (page_total > 220)
+            page_total = 220;
+        page = page_total;
+        qDebug() << "Total pages..." << page_total;
+        qDebug() << "Packet size .. " << packet.size();
+        if (mode != SerialConnectionTransferMode::MODE_UPLOAD) {
+            mode = SerialConnectionTransferMode::MODE_UPLOAD;
+            delay.setSingleShot(true);
+            delay.start(130);
+            QMetaObject::invokeMethod(this, "programLoop", Qt::QueuedConnection);
+        }
+
+    }
+
+    void SerialConnection::programLoop() {
+        if (delay.remainingTime() == 0) {
+            if (page >= page_total) {
+                page = 0;
+                packet.fill(0);
+                packet[0] = PACKET_HEADER;
+                packet[1] = PACKET_FORWARDMSG;
+                packet[2] = page_total;
+                packet[11] = BOOTPGM_SIZE;
+                packet[PACKET_SIZE - 1] = PACKET_HEADER ^ PACKET_FORWARDMSG ^ page_total ^ BOOTPGM_SIZE;
+                qDebug() << packet;
+
+                //TODO: Sent packet and check aoumt of bytes already sent
+
+            } else {
+                packet[0] = PACKET_HEADER;
+                packet[1] = PACKET_BOOTPAGE;
+                packet[2] = page;
+                uint8_t checksum = PACKET_HEADER ^ PACKET_BOOTPAGE ^ page;
+                uint8_t data_byte;
+                for (int i = 0; i < PAGE_SIZE; i++) {
+                    data_byte = data.get(page * PAGE_SIZE + i);
+                    packet[i + 3] = data_byte;
+                    checksum ^= data_byte;
+                }
+                packet[PACKET_SIZE - 1] = checksum;
+                //TODO: Sent packet and check aoumt of bytes already sent
+                page++;
+            }
+
+            //qDebug() << packet;
+            sendCommand(packet, true);
+            qDebug() << "wrote page: " << page;
+
+            delay.start(300);
+        }
+        //qDebug() << "No time: " << delay.remainingTime();
+        if (mode == SerialConnectionTransferMode::MODE_UPLOAD) {
+            QMetaObject::invokeMethod(this, "programLoop", Qt::QueuedConnection);
+        }
+    }
+
+
 } // KilobotOhcLib

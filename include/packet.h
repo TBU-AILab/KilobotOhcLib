@@ -15,7 +15,7 @@ enum  {
     PACKET_BOOTPAGE
 } PACKET_TYPE;
 
-enum class message_type_t{
+enum message_type_t {
     NORMAL = 0,
     GPS,
     SPECIAL = 0x80,

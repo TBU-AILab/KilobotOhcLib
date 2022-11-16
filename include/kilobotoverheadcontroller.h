@@ -6,23 +6,51 @@
 #define KILOBOTOHCLIB_KILOBOTOVERHEADCONTROLLER_H
 
 #include <QObject>
+#include <QThread>
 #include "serialconnection.h"
 #include "packet.h"
 
 namespace KilobotOhcLib {
     #define COMMAND_STOP 250
     #define COMMAND_LEDTOGGLE 251
-    class KilobotOverheadController: public QObject {
-        Q_OBJECT
-        public:
-            explicit KilobotOverheadController(QObject *parent = 0);
-            ~KilobotOverheadController();
-            SerialConnection *serial_conn;
-            void sendMessage(unsigned char type);
 
-        private:
-            void stopSending();
-            bool sending = false;
+    class KilobotOverheadController : public QObject {
+    Q_OBJECT
+    public:
+        explicit KilobotOverheadController(QObject *parent = 0);
+
+        ~KilobotOverheadController();
+
+        void sendMessage(unsigned char type);
+
+    public slots:
+
+        void openConnection();
+
+        void closeConnection();
+
+        void setPort(QString portName);
+
+        void sendProgram(QString fileName);
+
+    signals:
+
+        void open();
+
+        void close();
+
+        void sendCommad(QByteArray cmd, bool wait);
+
+        void port(QString portName);
+
+        void sendFirmware(QString fileName);
+
+    private:
+        void stopSending();
+
+        bool sending = false;
+        QThread thread;
+        SerialConnection *serial_conn;
     };
 
 } // KilobotOhcLib

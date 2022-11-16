@@ -13,17 +13,15 @@ namespace KilobotOhcLib {
 
         serial_conn = new SerialConnection();
 
-
-
-
-
-        // Create thread
-        QThread *thread = new QThread();
-        connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
+        connect(this, &KilobotOverheadController::open, serial_conn, &SerialConnection::open);
+        connect(this, &KilobotOverheadController::sendCommad, serial_conn, &SerialConnection::sendCommand);
+        connect(this, &KilobotOverheadController::close, serial_conn, &SerialConnection::close);
+        connect(this, &KilobotOverheadController::port, serial_conn, &SerialConnection::setPort);
+        connect(this, &KilobotOverheadController::sendFirmware, serial_conn, &SerialConnection::sendProgram);
 
         // Move connection to thread
-        //serial_conn->moveToThread(thread);
-
+        //serial_conn->moveToThread(&thread);
+        //thread.start();
 
 
     }
@@ -41,7 +39,8 @@ namespace KilobotOhcLib {
             packet[PACKET_SIZE-1]=PACKET_HEADER^PACKET_STOP;
         } else  {
             if (sending) {
-                this->stopSending();
+                sendMessage(COMMAND_STOP);
+                return;
                 //return;
             }
 
@@ -66,5 +65,21 @@ namespace KilobotOhcLib {
 
     void KilobotOverheadController::stopSending() {
         //TODO: append implementation
+    }
+
+    void KilobotOverheadController::openConnection() {
+        emit open();
+    }
+
+    void KilobotOverheadController::closeConnection() {
+        emit close();
+    }
+
+    void KilobotOverheadController::setPort(QString portName) {
+        emit port(portName);
+    }
+
+    void KilobotOverheadController::sendProgram(QString fileName) {
+        emit sendFirmware(fileName);
     }
 } // KilobotOhcLib
