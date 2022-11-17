@@ -22,10 +22,11 @@ namespace KilobotOhcLib {
         SC_Status_CannotOpenPort
     };
 
-    enum class  SerialConnectionTransferMode{
+    enum class SerialConnectionTransferMode {
         MODE_NORMAL = 0,
         MODE_UPLOAD = 0x01,
-        MODE_DOWNLOAD = 0x02
+        MODE_DOWNLOAD = 0x02,
+        MODE_COMMAND = 0X02
     };
 
     /**
@@ -39,8 +40,8 @@ namespace KilobotOhcLib {
         static QVector<QString> enumerate();
     signals:
         void readText(QString);
-        void status(SerialConnectionStatus status, QString msg = "");
 
+        void status(SerialConnectionStatus status, QString msg = "");
         void error(SerialConnectionStatus status, QString msg = "");
 
         void SendMsgsQueueState(bool);
@@ -56,6 +57,8 @@ namespace KilobotOhcLib {
         void close();
 
         void sendProgram(QString file);
+
+        void sendMessage(unsigned char type);
 
         void programLoop();
 

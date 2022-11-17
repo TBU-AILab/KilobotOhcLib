@@ -24,10 +24,16 @@ namespace KilobotOhcLib {
      * @param wait true/false if the sending should block following execution
      */
     void SerialConnection::sendCommand(const QByteArray &data, bool wait ) {
-        port->write(data);
-        if ((wait) && (!port->waitForBytesWritten(m_waitTimeout))) {
-            emit error(SerialConnectionStatus::SC_Status_Timeout, "Timeout when user command sending!");
+        if (port->isOpen()) {
+            port->write(data);
+            if ((wait) && (!port->waitForBytesWritten(m_waitTimeout))) {
+                emit error(SerialConnectionStatus::SC_Status_Timeout, "Timeout when user command sending!");
+            }
+        } else {
+            emit error(SerialConnectionStatus::SC_Status_CannotOpenPort, "Port is not opened");
+            mode = SerialConnectionTransferMode::MODE_NORMAL;
         }
+
     }
 
     void SerialConnection::open() {
@@ -40,11 +46,13 @@ namespace KilobotOhcLib {
             port->setParity(QSerialPort::NoParity);
             port->setStopBits(QSerialPort::OneStop);
             port->setFlowControl(QSerialPort::NoFlowControl);
-            if (!port->open(QIODevice::ReadWrite)){
-
-                emit status(SerialConnectionStatus::SC_Status_CannotOpenPort);
-            }else{
+            if (!port->open(QIODevice::ReadWrite)) {
+                emit error(SerialConnectionStatus::SC_Status_CannotOpenPort,
+                           tr("Cannot open %1 port").arg(port->portName()));
+            }else {
                 mode = SerialConnectionTransferMode::MODE_NORMAL;
+                emit status(SerialConnectionStatus::SC_Status_CannotOpenPort,
+                            tr("Port %1 opened.").arg(port->portName()));
             }
         }
     }
@@ -56,7 +64,7 @@ namespace KilobotOhcLib {
     QVector<QString> SerialConnection::enumerate() {
         auto list = QVector<QString>();
 
-        for (auto pi: QSerialPortInfo::availablePorts()){
+        for (const auto &pi: QSerialPortInfo::availablePorts()) {
             list.push_back(pi.portName());
         }
         return list;
@@ -69,9 +77,14 @@ namespace KilobotOhcLib {
     }
 
     void SerialConnection::setPort(const QString portName) {
-        close();
+        bool openned = false;
+        if (port->isOpen()) {
+            close();
+            openned = true;
+        }
         port->setPortName(portName);
-        open();
+        if (openned)
+            open();
     }
 
 
@@ -123,13 +136,13 @@ namespace KilobotOhcLib {
                 page++;
             }
 
-            //qDebug() << packet;
             sendCommand(packet, true);
-            qDebug() << "wrote page: " << page;
+
+            emit status(SerialConnectionStatus::SC_Status_OK, QString("FW Page sent: %1").arg(page));
 
             delay.start(300);
         }
-        //qDebug() << "No time: " << delay.remainingTime();
+
         if (mode == SerialConnectionTransferMode::MODE_UPLOAD) {
             QMetaObject::invokeMethod(this, "programLoop", Qt::QueuedConnection);
         }
@@ -137,3 +150,33 @@ namespace KilobotOhcLib {
 
 
 } // KilobotOhcLib
+void KilobotOhcLib::SerialConnection::sendMessage(unsigned char type) {
+    QByteArray packet(PACKET_SIZE, 0);
+    if (type == COMMAND_STOP) {
+        mode = SerialConnectionTransferMode::MODE_NORMAL;
+        packet[0] = PACKET_HEADER;
+        packet[1] = PACKET_STOP;
+        packet[PACKET_SIZE - 1] = PACKET_HEADER ^ PACKET_STOP;
+    } else {
+        if (mode != SerialConnectionTransferMode::MODE_NORMAL) {
+            sendMessage(COMMAND_STOP);
+            return;
+            //return;
+        }
+        if (type == COMMAND_LEDTOGGLE) {
+            mode = SerialConnectionTransferMode::MODE_NORMAL;
+            packet[0] = PACKET_HEADER;
+            packet[1] = PACKET_LEDTOGGLE;
+            packet[PACKET_SIZE - 1] = PACKET_HEADER ^ PACKET_LEDTOGGLE;
+        } else {
+            mode = SerialConnectionTransferMode::MODE_COMMAND;
+            packet[0] = PACKET_HEADER;
+            packet[1] = PACKET_FORWARDMSG;
+            packet[11] = type;
+            packet[PACKET_SIZE - 1] = PACKET_HEADER ^ PACKET_FORWARDMSG ^ type;
+        }
+    }
+
+    //serial_conn->resetDelay();
+    sendCommand(packet);
+}

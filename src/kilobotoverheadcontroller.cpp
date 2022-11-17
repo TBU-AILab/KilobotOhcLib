@@ -18,6 +18,11 @@ namespace KilobotOhcLib {
         connect(this, &KilobotOverheadController::close, serial_conn, &SerialConnection::close);
         connect(this, &KilobotOverheadController::port, serial_conn, &SerialConnection::setPort);
         connect(this, &KilobotOverheadController::sendFirmware, serial_conn, &SerialConnection::sendProgram);
+        connect(this, &KilobotOverheadController::command, serial_conn, &SerialConnection::sendMessage);
+
+        connect(serial_conn, &SerialConnection::error, this, &KilobotOverheadController::error);
+        connect(serial_conn, &SerialConnection::status, this, &KilobotOverheadController::status);
+
 
         // Move connection to thread
         //serial_conn->moveToThread(&thread);
@@ -31,36 +36,7 @@ namespace KilobotOhcLib {
     }
 
     void KilobotOverheadController::sendMessage(unsigned char type) {
-        QByteArray packet(PACKET_SIZE, 0);
-        if (type == COMMAND_STOP) {
-            sending = false;
-            packet[0] = PACKET_HEADER;
-            packet[1] = PACKET_STOP;
-            packet[PACKET_SIZE-1]=PACKET_HEADER^PACKET_STOP;
-        } else  {
-            if (sending) {
-                sendMessage(COMMAND_STOP);
-                return;
-                //return;
-            }
-
-            if (type == COMMAND_LEDTOGGLE) {
-                sending = false;
-                packet[0] = PACKET_HEADER;
-                packet[1] = PACKET_LEDTOGGLE;
-                packet[PACKET_SIZE-1]=PACKET_HEADER^PACKET_LEDTOGGLE;
-            } else {
-                sending = true;
-                packet[0] = PACKET_HEADER;
-                packet[1] = PACKET_FORWARDMSG;
-                packet[11] = type;
-                packet[PACKET_SIZE-1]=PACKET_HEADER^PACKET_FORWARDMSG^type;
-            }
-        }
-
-        //serial_conn->resetDelay();
-        serial_conn->sendCommand(packet);
-
+        emit command(type);
     }
 
     void KilobotOverheadController::stopSending() {

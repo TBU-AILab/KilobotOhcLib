@@ -45,6 +45,12 @@ namespace KilobotOhcLib {
 
         void sendFirmware(QString fileName);
 
+        void command(unsigned char type);
+
+        void status(SerialConnectionStatus status, QString msg = "");
+
+        void error(SerialConnectionStatus status, QString msg = "");
+
     private:
         void stopSending();
 

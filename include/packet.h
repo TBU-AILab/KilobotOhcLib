@@ -1,13 +1,17 @@
 // 01010101
 #ifndef KILOBOTOHCLIB_PACKET_H
 #define KILOBOTOHCLIB_PACKET_H
+
 #include <cstdint>
 
 #define PAGE_SIZE 128
 #define PACKET_HEADER 0x55
 #define PACKET_SIZE   PAGE_SIZE+4
 
-enum  {
+#define COMMAND_STOP 250
+#define COMMAND_LEDTOGGLE 251
+
+enum {
     PACKET_STOP,
     PACKET_LEDTOGGLE,
     PACKET_FORWARDMSG,
